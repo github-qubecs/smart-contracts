@@ -1411,10 +1411,10 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
         uint256[] quotePrice;
         uint256[] saleAmountIn;
         uint256[] saleAmountOut;        
-        uint256 minimumRequire;
-        uint256 maximumRequire;
+        uint256[] minimumRequire;
+        uint256[] maximumRequire;
         uint256 minimumEligibleQuoteForTx;
-        uint256 minimumEligibleQubeForTx;
+        uint256[] minimumEligibleQubeForTx;
         bool tierStatus;
         bool signOff;
         bool delegateState;
@@ -1507,10 +1507,10 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
         uint256[] vestingMonths;
         uint256[] instantRoi;
         uint256[] installmentRoi;
-        uint256 minimumRequire;
-        uint256 maximumRequire;
+        uint256[] minimumRequire;//Minimum requirement per tier
+        uint256[] maximumRequire;//Maximum allowed per tier
         uint256 minimumEligibleQuoteForTx;
-        uint256 minimumEligibleQubeForTx;
+        uint256[] minimumEligibleQubeForTx;//Qube stake requirement for each tier
         bool isLockEnabled;
         bool delegateState;
     }
@@ -1540,7 +1540,7 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
             quotePrice: vars.quotePrice,
             saleAmountIn: vars.saleAmountIn,
             saleAmountOut: new uint256[](vars.saleAmountIn.length),
-            minimumRequire: vars.minimumRequire,
+            minimumRequire: vars.minimumRequire, 
             maximumRequire: vars.maximumRequire,
             minimumEligibleQuoteForTx: vars.minimumEligibleQuoteForTx,
             minimumEligibleQubeForTx: vars.minimumEligibleQubeForTx,
@@ -1613,10 +1613,10 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
 
     function setOtherStore(
         uint256 _id,
-        uint256 _minimumRequire,
-        uint256 _maximumRequire,
+        uint256[] memory _minimumRequire,
+        uint256[] memory _maximumRequire,
         uint256 _minimumEligibleQuoteForTx,
-        uint256 _minimumEligibleQubeForTx
+        uint256[] memory _minimumEligibleQubeForTx
     ) public onlyOwner {
         reserveInfo[_id].minimumRequire = _minimumRequire;
         reserveInfo[_id].maximumRequire = _maximumRequire;
@@ -1716,16 +1716,16 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
         
         if(address(vars.quoteToken) == address(0)){
            uint256 getAmountIn = msg.value;
-           require(getAmountIn >= vars.minimumRequire && getAmountIn <= vars.maximumRequire, "invalid amount passed");
+           require(getAmountIn >= vars.minimumRequire[vars.currentTier] && getAmountIn <= vars.maximumRequire[vars.currentTier], "invalid amount passed");
            if(getAmountIn >= vars.minimumEligibleQuoteForTx){
-               require(qube.balanceOf(user) >= vars.minimumEligibleQubeForTx, "Not eligible to buy");
+               require(qube.balanceOf(user) >= vars.minimumEligibleQubeForTx[vars.currentTier], "Not eligible to buy");
            }
            
            getAmountOut = getAmountIn.mul(getPrice(vars.salePrice[vars.currentTier],vars.quotePrice[vars.currentTier],18)).div(1e18);    
         }else {
-           require(amount >= vars.minimumRequire && amount <= vars.maximumRequire, "invalid amount passed");
+           require(amount >= vars.minimumRequire[vars.currentTier] && amount <= vars.maximumRequire[vars.currentTier], "invalid amount passed");
            if(amount == vars.minimumEligibleQuoteForTx){
-               require(qube.balanceOf(user) >= vars.minimumEligibleQubeForTx,"Not eligible to buy");
+               require(qube.balanceOf(user) >= vars.minimumEligibleQubeForTx[vars.currentTier],"Not eligible to buy");
            }
            
            vars.quoteToken.safeTransferFrom(user,address(this),amount);
@@ -1862,7 +1862,7 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
             }
         }
         
-        if(!(vars.startTime[vars.currentTier] <= block.timestamp && vars.endTime[vars.currentTier] >= block.timestamp && amount >= vars.minimumRequire && amount <= vars.maximumRequire)){
+        if(!(vars.startTime[vars.currentTier] <= block.timestamp && vars.endTime[vars.currentTier] >= block.timestamp && amount >= vars.minimumRequire[vars.currentTier] && amount <= vars.maximumRequire[vars.currentTier])){
             return 0;
         }
         
