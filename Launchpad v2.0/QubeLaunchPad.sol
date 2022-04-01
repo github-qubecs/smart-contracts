@@ -1577,9 +1577,34 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
         dataStore storage vars = reserveInfo[reserveInfoID];
         return vars.minimumRequire[tierID];
     }
-    function MaximumPurchaseAmount(uint256 reserveInfoID, uint256 tierID) public view returns (uint256){
+    function maximumPurchaseAmount(uint256 reserveInfoID, uint256 tierID) public view returns (uint256){
         dataStore storage vars = reserveInfo[reserveInfoID];
         return vars.maximumRequire[tierID];
+    }
+
+    function qubeBalance(address walletAddress) public view returns (uint256){
+        return qube.balanceOf(walletAddress);
+    }
+
+    function saleCurrencyBalance(address walletAddress, uint256 reserveInfoID) public view returns (uint256){
+        dataStore storage vars = reserveInfo[reserveInfoID];
+        IBEP20 quoteToken = vars.quoteToken;
+        return quoteToken.balanceOf(walletAddress);
+    }
+
+    function isEligibleWallet(address walletAddress, uint256 reserveInfoID, uint256 tierID) public view returns (bool){
+        dataStore storage vars = reserveInfo[reserveInfoID]; //sale details and variables
+        bool minimumCubeCheck = false; 
+        bool minimumPurchaseCheck = false;
+        uint256 decimal = vars.quoteToken.decimals();
+        uint256 price = getPrice(vars.salePrice[vars.currentTier],vars.quotePrice[vars.currentTier],decimal);
+        if(qubeBalance(walletAddress)>=minimumQubeAmount(reserveInfoID, tierID)){
+            minimumCubeCheck=true;
+        }
+        if(vars.quoteToken.balanceOf(walletAddress)>=price){
+            minimumPurchaseCheck=true;
+        }
+        return minimumCubeCheck && minimumPurchaseCheck;
     }
 
     function setStateStore(
