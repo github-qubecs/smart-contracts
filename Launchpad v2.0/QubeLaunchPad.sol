@@ -1569,6 +1569,19 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
         );
     }
 
+    function minimumQubeAmount(uint256 reserveInfoID, uint256 tierID) public view returns (uint256){
+        dataStore storage vars = reserveInfo[reserveInfoID];
+        return vars.minimumEligibleQubeForTx[tierID];
+    }
+    function minimumPurchaseAmount(uint256 reserveInfoID, uint256 tierID) public view returns (uint256){
+        dataStore storage vars = reserveInfo[reserveInfoID];
+        return vars.minimumRequire[tierID];
+    }
+    function MaximumPurchaseAmount(uint256 reserveInfoID, uint256 tierID) public view returns (uint256){
+        dataStore storage vars = reserveInfo[reserveInfoID];
+        return vars.maximumRequire[tierID];
+    }
+
     function setStateStore(
         uint256 _id,
         bool _tierStatus,
