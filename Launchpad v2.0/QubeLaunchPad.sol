@@ -20,22 +20,8 @@ import "./SignerManager.sol";
 import "./EnumerableSet.sol";
 import "./ReentrancyGuard.sol";
 
-contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
-    
+library QubeLaunchPadLib{
     using SafeMath for uint256;
-    using SafeBEP20 for IBEP20;
-    using Address for address payable;
-    using SignatureChecker for address;
-    using EnumerableSet for EnumerableSet.UintSet;
-
-    uint256 public monthDuration = 2592000;
-    uint256 public internalLockTickets; 
-    uint256 public minimumVestingPeriod = 0;
-    uint256 public maximumVestingPeriod = 12;
-    bytes32 public constant SIGNATURE_PERMIT_TYPEHASH = keccak256("bytes signature,address user,uint256 amount,uint256 tier,uint256 slot,uint256 deadline");
-    
-    address public distributor; 
-
     struct dataStore{
         IBEP20 saleToken;
         IBEP20 quoteToken;
@@ -78,12 +64,98 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
         uint256 installmentMonths;
         uint256 distributeROI;        
     }
+    function getPrice(uint256 salePrice,uint256 quotePrice,uint256 decimal) public pure returns (uint256) {
+       return (10 ** decimal) * salePrice / quotePrice;
+    }
 
-    dataStore[] private reserveInfo;
-    vestingStore[] private vestingInfo;
+    function vestingDetails(vestingStore memory vestingStoreId) public pure returns (vestingStore memory) {
+        vestingStore memory vesting = vestingStoreId;
+        for(uint256 i; i<vesting.vestingMonths.length; i++){
+            vesting.distributeROI[i] = uint256(1e4).div(vesting.vestingMonths[i]);
+        }
+        return (vesting);
+    }
+
+    function reserveDetails(dataStore memory vestingStoreId) public view returns (dataStore memory) {
+        dataStore memory vars = vestingStoreId;
+
+        while(vars.endTime[vars.currentTier] < block.timestamp && !vars.tierStatus){
+            if(vars.currentTier != vars.startTime.length) {
+                vars.currentTier++;
+                
+                if(vars.startTime[vars.normalSaleStartTier + 1] <= block.timestamp){
+                    vars.tierStatus = true;
+                    vars.currentTier = vars.normalSaleStartTier + 1;
+                } 
+            }
+            
+            if(!vars.signOff && vars.endTime[vars.normalSaleStartTier] <= block.timestamp) {
+                vars.signOff = true;
+            }
+        }
+        for(uint256 i=0;i<=vars.currentTier;i++){
+            if(i != 0){
+                vars.saleAmountIn[i] = vars.saleAmountIn[i].add(vars.saleAmountIn[i-1].sub(vars.saleAmountOut[i-1]));
+                vars.saleAmountOut[i-1] = vars.saleAmountIn[i-1];
+            }
+        }
+        return vars;
+    }
+
+    function getTokenOut(dataStore memory vestingStoreId,uint256 amount) public view returns (uint256){
+        QubeLaunchPadLib.dataStore memory vars = vestingStoreId; 
+
+        while(vars.endTime[vars.currentTier] < block.timestamp && !vars.tierStatus){
+            if(vars.currentTier != vars.startTime.length) {
+                vars.currentTier++;                
+                if(vars.startTime[vars.normalSaleStartTier + 1] <= block.timestamp){
+                    vars.tierStatus = true;
+                    vars.currentTier = vars.normalSaleStartTier + 1;
+                }
+            }
+        }
+        
+        if(!(vars.startTime[vars.currentTier] <= block.timestamp && vars.endTime[vars.currentTier] >= block.timestamp && amount >= vars.minimumRequire[vars.currentTier] && amount <= vars.maximumRequire[vars.currentTier])){
+            return 0;
+        }
+        
+        if(address(vars.quoteToken) == address(0)){
+            return amount.mul(getPrice(vars.salePrice[vars.currentTier],vars.quotePrice[vars.currentTier],18)).div(1e18);
+        }
+        
+        if(address(vars.quoteToken) != address(0)){
+            uint256 decimal = vars.quoteToken.decimals();
+            return amount.mul(getPrice(vars.salePrice[vars.currentTier],vars.quotePrice[vars.currentTier],decimal)).div(10 ** decimal);
+        } else{
+            return 0;
+        }
+    }
+}
+
+contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
+    
+    using SafeMath for uint256;
+    using SafeBEP20 for IBEP20;
+    using Address for address payable;
+    using SignatureChecker for address;
+    using EnumerableSet for EnumerableSet.UintSet;
+    using QubeLaunchPadLib for QubeLaunchPadLib.dataStore;
+    using QubeLaunchPadLib for QubeLaunchPadLib.vestingStore;
+    using QubeLaunchPadLib for QubeLaunchPadLib.userData;
+
+    uint256 public monthDuration = 2592000;
+    uint256 public internalLockTickets; 
+    uint256 public minimumVestingPeriod = 0;
+    uint256 public maximumVestingPeriod = 12;
+    bytes32 public constant SIGNATURE_PERMIT_TYPEHASH = keccak256("bytes signature,address user,uint256 amount,uint256 tier,uint256 slot,uint256 deadline");
+    
+    address public distributor; 
+
+    QubeLaunchPadLib.dataStore[] private reserveInfo;
+    QubeLaunchPadLib.vestingStore[] private vestingInfo;
    
     mapping (address => EnumerableSet.UintSet) private userLockIdInfo;
-    mapping (uint256 => userData) public userLockInfo;
+    mapping (uint256 => QubeLaunchPadLib.userData) public userLockInfo;
     mapping (bytes => bool) public isSigned;
     mapping (uint256 => uint256) public totalDelegates;
     mapping (uint256 => mapping (address => uint256)) public userDelegate;
@@ -165,7 +237,7 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
             lastTierTime = vars.endTime[i];
         }
 
-        reserveInfo.push(dataStore({
+        reserveInfo.push(QubeLaunchPadLib.dataStore({
             saleToken: vars.saleToken,
             quoteToken: vars.quoteToken,
             currentTier: 0,
@@ -187,7 +259,7 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
             delegateState: vars.delegateState
         }));
 
-        vestingInfo.push(vestingStore({
+        vestingInfo.push(QubeLaunchPadLib.vestingStore({
             vestingMonths: vars.vestingMonths,
             instantRoi: vars.instantRoi,
             installmentRoi: vars.installmentRoi,   
@@ -208,15 +280,15 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
     }
 
     function minimumQubeAmount(uint256 reserveInfoID, uint256 tierID) public view returns (uint256){
-        dataStore storage vars = reserveInfo[reserveInfoID];
+        QubeLaunchPadLib.dataStore storage vars = reserveInfo[reserveInfoID];
         return vars.minimumEligibleQubeForTx[tierID];
     }
     function minimumPurchaseAmount(uint256 reserveInfoID, uint256 tierID) public view returns (uint256){
-        dataStore storage vars = reserveInfo[reserveInfoID];
+        QubeLaunchPadLib.dataStore storage vars = reserveInfo[reserveInfoID];
         return vars.minimumRequire[tierID];
     }
     function maximumPurchaseAmount(uint256 reserveInfoID, uint256 tierID) public view returns (uint256){
-        dataStore storage vars = reserveInfo[reserveInfoID];
+        QubeLaunchPadLib.dataStore storage vars = reserveInfo[reserveInfoID];
         return vars.maximumRequire[tierID];
     }
 
@@ -225,13 +297,13 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
     }
 
     function saleCurrencyBalance(address walletAddress, uint256 reserveInfoID) public view returns (uint256){
-        dataStore storage vars = reserveInfo[reserveInfoID];
+        QubeLaunchPadLib.dataStore storage vars = reserveInfo[reserveInfoID];
         IBEP20 quoteToken = vars.quoteToken;
         return quoteToken.balanceOf(walletAddress);
     }
 
     function isEligibleWallet(address walletAddress, uint256 reserveInfoID, uint256 tierID) public view returns (bool){
-        dataStore storage vars = reserveInfo[reserveInfoID]; //sale details and variables
+        QubeLaunchPadLib.dataStore storage vars = reserveInfo[reserveInfoID]; //sale details and variables
         bool minimumCubeCheck = false; 
         bool minimumPurchaseCheck = false;
         uint256 decimal = vars.quoteToken.decimals();
@@ -366,8 +438,8 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
     }
     
     function buy(uint256 id,uint256 amount,bytes memory signStore) public payable nonReentrant {
-        dataStore storage vars = reserveInfo[id];
-        vestingStore storage vesting = vestingInfo[id];
+        QubeLaunchPadLib.dataStore storage vars = reserveInfo[id];
+        QubeLaunchPadLib.vestingStore storage vesting = vestingInfo[id];
         address user = _msgSender();
         uint256 getAmountOut;
         while(vars.endTime[vars.currentTier] < block.timestamp && !vars.tierStatus){
@@ -429,7 +501,7 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
                 vars.saleToken.safeTransfer(user,getAmountOut.mul(vesting.instantRoi[vars.currentTier]).div(1e2));
             }
             userLockIdInfo[user].add(internalLockTickets);
-            userLockInfo[internalLockTickets] = userData({
+            userLockInfo[internalLockTickets] = QubeLaunchPadLib.userData({
                 userAddress: user,
                 saleToken: vars.saleToken,
                 idoID: id,
@@ -491,7 +563,7 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
     function claim(uint256 lockId) public whenNotPaused nonReentrant {
         require(userLockContains(msg.sender,lockId), "unable to access");
         
-        userData storage store = userLockInfo[lockId];
+        QubeLaunchPadLib.userData storage store = userLockInfo[lockId];
         
         require(store.lockedDuration.add(monthDuration) < block.timestamp, "unable to claim now");
         require(store.releasedAmount != store.lockedAmount, "amount exceed");
@@ -526,32 +598,7 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
     }
     
     function getTokenOut(uint256 id,uint256 amount) public view returns (uint256){
-        dataStore memory vars = reserveInfo[id]; 
-
-        while(vars.endTime[vars.currentTier] < block.timestamp && !vars.tierStatus){
-            if(vars.currentTier != vars.startTime.length) {
-                vars.currentTier++;                
-                if(vars.startTime[vars.normalSaleStartTier + 1] <= block.timestamp){
-                    vars.tierStatus = true;
-                    vars.currentTier = vars.normalSaleStartTier + 1;
-                }
-            }
-        }
-        
-        if(!(vars.startTime[vars.currentTier] <= block.timestamp && vars.endTime[vars.currentTier] >= block.timestamp && amount >= vars.minimumRequire[vars.currentTier] && amount <= vars.maximumRequire[vars.currentTier])){
-            return 0;
-        }
-        
-        if(address(vars.quoteToken) == address(0)){
-            return amount.mul(getPrice(vars.salePrice[vars.currentTier],vars.quotePrice[vars.currentTier],18)).div(1e18);
-        }
-        
-        if(address(vars.quoteToken) != address(0)){
-            uint256 decimal = vars.quoteToken.decimals();
-            return amount.mul(getPrice(vars.salePrice[vars.currentTier],vars.quotePrice[vars.currentTier],decimal)).div(10 ** decimal);
-        } else{
-            return 0;
-        }
+        return reserveInfo[id].getTokenOut(amount);
     }
 
     function userLockContains(address account,uint256 value) public view returns (bool) {
@@ -570,38 +617,12 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
         return userLockIdInfo[account].values();
     }
 
-    function reserveDetails(uint256 id) public view returns (dataStore memory) {
-        dataStore memory vars = reserveInfo[id];
-
-        while(vars.endTime[vars.currentTier] < block.timestamp && !vars.tierStatus){
-            if(vars.currentTier != vars.startTime.length) {
-                vars.currentTier++;
-                
-                if(vars.startTime[vars.normalSaleStartTier + 1] <= block.timestamp){
-                    vars.tierStatus = true;
-                    vars.currentTier = vars.normalSaleStartTier + 1;
-                } 
-            }
-            
-            if(!vars.signOff && vars.endTime[vars.normalSaleStartTier] <= block.timestamp) {
-                vars.signOff = true;
-            }
-        }
-        for(uint256 i=0;i<=vars.currentTier;i++){
-            if(i != 0){
-                vars.saleAmountIn[i] = vars.saleAmountIn[i].add(vars.saleAmountIn[i-1].sub(vars.saleAmountOut[i-1]));
-                vars.saleAmountOut[i-1] = vars.saleAmountIn[i-1];
-            }
-        }
-        return vars;
+    function reserveDetails(uint256 id) public view returns (QubeLaunchPadLib.dataStore memory) {
+        return reserveInfo[id].reserveDetails();
     }
 
-    function vestingDetils(uint256 id) public view returns (vestingStore memory) {
-        vestingStore memory vesting = vestingInfo[id];
-        for(uint256 i; i<vesting.vestingMonths.length; i++){
-            vesting.distributeROI[i] = uint256(1e4).div(vesting.vestingMonths[i]);
-        }
-        return (vesting);
+    function vestingDetails(uint256 id) public view returns (QubeLaunchPadLib.vestingStore memory) {
+        return vestingInfo[id].vestingDetails();
     }
 
     function reserveLength() public view returns (uint256) {
