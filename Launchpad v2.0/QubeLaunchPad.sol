@@ -130,6 +130,16 @@ library QubeLaunchPadLib{
             return 0;
         }
     }
+
+    function minimumPurchaseAmount(dataStore storage vestingStoreId, uint256 tierID) public view returns (uint256){
+        dataStore storage vars = vestingStoreId;
+        return vars.minimumRequire[tierID];
+    }
+    function maximumPurchaseAmount(dataStore storage vestingStoreId, uint256 tierID) public view returns (uint256){
+        QubeLaunchPadLib.dataStore storage vars = vestingStoreId;
+        return vars.maximumRequire[tierID];
+    }
+    
 }
 
 contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
@@ -284,12 +294,10 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
         return vars.minimumEligibleQubeForTx[tierID];
     }
     function minimumPurchaseAmount(uint256 reserveInfoID, uint256 tierID) public view returns (uint256){
-        QubeLaunchPadLib.dataStore storage vars = reserveInfo[reserveInfoID];
-        return vars.minimumRequire[tierID];
+        return reserveInfo[reserveInfoID].minimumPurchaseAmount(tierID);
     }
     function maximumPurchaseAmount(uint256 reserveInfoID, uint256 tierID) public view returns (uint256){
-        QubeLaunchPadLib.dataStore storage vars = reserveInfo[reserveInfoID];
-        return vars.maximumRequire[tierID];
+        return reserveInfo[reserveInfoID].maximumPurchaseAmount(tierID);
     }
 
     function qubeBalance(address walletAddress) public view returns (uint256){
