@@ -194,16 +194,10 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
 
     function isEligibleWallet(address walletAddress, uint256 reserveInfoID, uint256 tierID) public view returns (bool){
         QubeLaunchPadLib.dataStore storage vars = reserveInfo[reserveInfoID]; //sale details and variables
-        bool minimumCubeCheck = false; 
-        bool minimumPurchaseCheck = false;
         uint256 decimal = vars.quoteToken.decimals();
         uint256 price = getPrice(vars.salePrice[vars.currentTier],vars.quotePrice[vars.currentTier],decimal);
-        if(qubeBalance(walletAddress)>=minimumQubeAmount(reserveInfoID, tierID)){
-            minimumCubeCheck=true;
-        }
-        if(vars.quoteToken.balanceOf(walletAddress)>=price){
-            minimumPurchaseCheck=true;
-        }
+        bool minimumCubeCheck = qubeBalance(walletAddress)>=minimumQubeAmount(reserveInfoID, tierID); 
+        bool minimumPurchaseCheck = vars.quoteToken.balanceOf(walletAddress)>=price;
         return minimumCubeCheck && minimumPurchaseCheck;
     }
 
