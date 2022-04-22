@@ -98,26 +98,8 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
         monthDuration = time;
     }
     
-    struct inputStore{
-        IBEP20 saleToken;
-        IBEP20 quoteToken;
-        uint256[] startTime;
-        uint256[] endTime;
-        uint256[] salePrice;
-        uint256[] quotePrice;
-        uint256[] saleAmountIn;
-        uint256[] vestingMonths;
-        uint256[] instantRoi;
-        uint256[] installmentRoi;
-        uint256[] minimumRequire;//Minimum requirement per tier
-        uint256[] maximumRequire;//Maximum allowed per tier
-        uint256 minimumEligibleQuoteForTx;
-        uint256[] minimumEligibleQubeForTx;//Qube stake requirement for each tier
-        bool isLockEnabled;
-        bool delegateState;
-    }
     
-    function initICO(inputStore memory vars) public onlyOwner {
+    function initICO(QubeLaunchPadLib.inputStore memory vars) public onlyOwner {
         uint256 lastTierTime = block.timestamp;
         uint256 saleAmountIn;
         for(uint256 i;i<vars.startTime.length;i++){

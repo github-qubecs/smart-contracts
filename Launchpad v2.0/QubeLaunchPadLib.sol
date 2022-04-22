@@ -47,6 +47,24 @@ library QubeLaunchPadLib{
         uint256 installmentMonths;
         uint256 distributeROI;        
     }
+    struct inputStore{
+        IBEP20 saleToken;
+        IBEP20 quoteToken;
+        uint256[] startTime;
+        uint256[] endTime;
+        uint256[] salePrice;
+        uint256[] quotePrice;
+        uint256[] saleAmountIn;
+        uint256[] vestingMonths;
+        uint256[] instantRoi;
+        uint256[] installmentRoi;
+        uint256[] minimumRequire;//Minimum requirement per tier
+        uint256[] maximumRequire;//Maximum allowed per tier
+        uint256 minimumEligibleQuoteForTx;
+        uint256[] minimumEligibleQubeForTx;//Qube stake requirement for each tier
+        bool isLockEnabled;
+        bool delegateState;
+    }
     function getPrice(uint256 salePrice,uint256 quotePrice,uint256 decimal) public pure returns (uint256) {
        return (10 ** decimal) * salePrice / quotePrice;
     }
