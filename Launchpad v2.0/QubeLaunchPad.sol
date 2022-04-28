@@ -20,7 +20,8 @@ import "./SignerManager.sol";
 import "./EnumerableSet.sol";
 import "./ReentrancyGuard.sol";
 import "./QubeLaunchPadLib.sol";
-import "./QubePresale.sol";
+import "./QubeBalance.sol";
+
 
 contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
     
@@ -55,14 +56,14 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
     event _claim(address indexed user,uint256 idoId,uint256 stakeId,uint256 receivedToken,uint256 unlockCount,uint256 time);
 
     IBEP20 public qube;
-    QubePresale public qubePresale;
+    IQubeBalance public qubeBalanceContract;
     
     receive() external payable {}
     
-    constructor(IBEP20 _qube, QubePresale _qubePresale,address signer) {
+    constructor(IBEP20 _qube, address signer, address _qubeBalanceContract) {
         setSignerInternal(signer);
         qube = _qube;
-        qubePresale=_qubePresale;
+        qubeBalanceContract=_qubeBalanceContract;
 
         distributor = msg.sender;
     }    
@@ -165,7 +166,7 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
     }
 
     function qubeBalance(address walletAddress) public view returns (uint256){
-        return qube.balanceOf(walletAddress) + qubePresale.qubeBalanceOf(walletAddress);
+        return qubeBalanceContract.qubeBalance(walletAddress);
     }
 
     function saleCurrencyBalance(address walletAddress, uint256 reserveInfoID) public view returns (uint256){
