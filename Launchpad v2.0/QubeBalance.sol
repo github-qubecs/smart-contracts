@@ -10,6 +10,8 @@ import "./Ownable.sol";
 import "./PancakePair.sol";
 import "./SafeMath.sol";
 import "./QubeStakeFactory.sol";
+import "./IERC1155.sol";
+
 
 interface IQubeBalance {
     function qubeBalance(address walletAddress) external view returns (uint256);
@@ -30,13 +32,21 @@ contract QubeBalance is Ownable{
     QubePresale public qubePresale;
     IPancakePair public pancakePair;
     QubeStakeFactory public qubeStakeFactory;
+    IERC1155 public silver;
+    IERC1155 public gold;
+    IERC1155 public diamond;
 
 
-    constructor(IBEP20 _qube, QubePresale _qubePresale, IPancakePair _pancakePair, QubeStakeFactory _qubeStakeFactory) {
+
+
+    constructor(IBEP20 _qube, QubePresale _qubePresale, IPancakePair _pancakePair, QubeStakeFactory _qubeStakeFactory, IERC1155 _silver, IERC1155 _gold,IERC1155 _diamond) {
         qube = _qube;
         qubePresale=_qubePresale;
         pancakePair=_pancakePair;
         qubeStakeFactory=_qubeStakeFactory;
+        silver=_silver;
+        gold=_gold;
+        diamond=_diamond;
     }    
 
 
@@ -51,6 +61,15 @@ contract QubeBalance is Ownable{
     }
     function setQubeeStake(QubePresale _qubeStakeFactory) public onlyOwner{
         qubeStakeFactory=_qubeStakeFactory;
+    }
+    function setSilver(IBEP20 _silver) public onlyOwner{
+        silver=_silver;
+    }
+    function setGold(IBEP20 _gold) public onlyOwner{
+        gold=_gold;
+    }
+    function setDiamond(IBEP20 _diamond) public onlyOwner{
+        diamond=_diamond;
     }
 
     function getQubeBalance(address walletAddress)public returns (uint256){
@@ -77,8 +96,24 @@ contract QubeBalance is Ownable{
         }
         return _balance;
     }
+    function getNFTBalance(address walletAddress)public view returns (uint256){
+        uint256 balance=0;
+        for (uint i=0;i<=1100;i++){
+            balance+=silver.balanceOf(walletAddress, i);
+        }
+        for (uint i=0;i<=300;i++){
+            balance+=gold.balanceOf(walletAddress, i);
+        }
+        for (uint i=0;i<=100;i++){
+            balance+=diamond.balanceOf(walletAddress, i);
+        }
+        return balance;
+    }
     
     function qubeBalance(address walletAddress) public view returns (uint256){
         return getQubeBalance(walletAddress) + getQubePresaleBalance(walletAddress)+getPancakePairBalance(walletAddress)+getQubeStakeFactoryBalance(walletAddress);
+    }
+    function qubeBalanceWithNFT(address walletAddress) public view returns (uint256){
+        return getQubeBalance(walletAddress) + getQubePresaleBalance(walletAddress)+getPancakePairBalance(walletAddress)+getQubeStakeFactoryBalance(walletAddress)+getNFTBalance(walletAddress);
     }
 }

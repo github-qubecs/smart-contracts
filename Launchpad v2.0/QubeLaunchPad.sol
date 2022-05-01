@@ -165,10 +165,6 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
         return reserveInfo[reserveInfoID].maximumPurchaseAmount(tierID);
     }
 
-    function qubeBalance(address walletAddress) public view returns (uint256){
-        return qubeBalanceContract.qubeBalance(walletAddress);
-    }
-
     function saleCurrencyBalance(address walletAddress, uint256 reserveInfoID) public view returns (uint256){
         QubeLaunchPadLib.dataStore storage vars = reserveInfo[reserveInfoID];
         IBEP20 quoteToken = vars.quoteToken;
@@ -179,7 +175,7 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
         QubeLaunchPadLib.dataStore storage vars = reserveInfo[reserveInfoID]; //sale details and variables
         uint256 decimal = vars.quoteToken.decimals();
         uint256 price = getPrice(vars.salePrice[vars.currentTier],vars.quotePrice[vars.currentTier],decimal);
-        bool minimumCubeCheck = qubeBalance(walletAddress)>=minimumQubeAmount(reserveInfoID, tierID); 
+        bool minimumCubeCheck = qubeBalanceContract.qubeBalance(walletAddress)>=minimumQubeAmount(reserveInfoID, tierID)||qubeBalanceContract.qubeBalanceWithNFT(walletAddress)>=minimumQubeAmount(reserveInfoID, tierID); 
         bool minimumPurchaseCheck = vars.quoteToken.balanceOf(walletAddress)>=price;
         return minimumCubeCheck && minimumPurchaseCheck;
     }
@@ -333,14 +329,14 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
            uint256 getAmountIn = msg.value;
            require(getAmountIn >= vars.minimumRequire[vars.currentTier] && getAmountIn <= vars.maximumRequire[vars.currentTier], "invalid amount passed");
            if(getAmountIn >= vars.minimumEligibleQuoteForTx){
-               require(qube.balanceOf(user) >= vars.minimumEligibleQubeForTx[vars.currentTier], "Not eligible to buy");
+               require(qubeBalanceContract.qubeBalance(user) >= vars.minimumEligibleQubeForTx[vars.currentTier]||qubeBalanceContract.qubeBalanceWithNFT(user) >= vars.minimumEligibleQubeForTx[vars.currentTier], "Not eligible to buy");
            }
            
            getAmountOut = getAmountIn.mul(getPrice(vars.salePrice[vars.currentTier],vars.quotePrice[vars.currentTier],18)).div(1e18);    
         }else {
            require(amount >= vars.minimumRequire[vars.currentTier] && amount <= vars.maximumRequire[vars.currentTier], "invalid amount passed");
            if(amount == vars.minimumEligibleQuoteForTx){
-               require(qube.balanceOf(user) >= vars.minimumEligibleQubeForTx[vars.currentTier],"Not eligible to buy");
+               require(qubeBalanceContract.qubeBalance(user) >= vars.minimumEligibleQubeForTx[vars.currentTier]||qubeBalanceContract.qubeBalanceWithNFT(user) >= vars.minimumEligibleQubeForTx[vars.currentTier],"Not eligible to buy");
            }
            
            vars.quoteToken.safeTransferFrom(user,address(this),amount);
