@@ -60,11 +60,10 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
     
     receive() external payable {}
     
-    constructor(IBEP20 _qube, address signer, address _qubeBalanceContract) {
+    constructor(IBEP20 _qube, address signer, IQubeBalance _qubeBalanceContract) {
         setSignerInternal(signer);
         qube = _qube;
         qubeBalanceContract=_qubeBalanceContract;
-
         distributor = msg.sender;
     }    
 
@@ -459,36 +458,8 @@ contract QubeLaunchPad is Ownable,Pausable,SignerManager,ReentrancyGuard{
     function signValidition(bytes32 hash,bytes memory signature) public view returns (bool) {
         return getSignerInternal().isValidSignatureNow(hash,signature);
     }
-    
-    function getTokenOut(uint256 id,uint256 amount) public view returns (uint256){
-        return reserveInfo[id].getTokenOut(amount);
-    }
 
     function userLockContains(address account,uint256 value) public view returns (bool) {
         return userLockIdInfo[account].contains(value);
-    }
-
-    function userLockLength(address account) public view returns (uint256) {
-        return userLockIdInfo[account].length();
-    }
-
-    function userLockAt(address account,uint256 index) public view returns (uint256) {
-        return userLockIdInfo[account].at(index);
-    }
-
-    function userTotalLockIds(address account) public view returns (uint256[] memory) {
-        return userLockIdInfo[account].values();
-    }
-
-    function reserveDetails(uint256 id) public view returns (QubeLaunchPadLib.dataStore memory) {
-        return reserveInfo[id].reserveDetails();
-    }
-
-    function vestingDetails(uint256 id) public view returns (QubeLaunchPadLib.vestingStore memory) {
-        return vestingInfo[id].vestingDetails();
-    }
-
-    function reserveLength() public view returns (uint256) {
-        return reserveInfo.length;
     }
 }
