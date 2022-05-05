@@ -27,6 +27,12 @@ contract QubeBalance is Ownable{
         uint256 stakeAmount;
         uint256 totalRewards;
     }
+
+    struct userNFTData{
+        uint256[] IDs;
+        uint256 rank;
+    }
+
     using SafeMath for uint256;
 
     IBEP20 public qube;
@@ -36,7 +42,7 @@ contract QubeBalance is Ownable{
     IERC1155 public silver;
     IERC1155 public gold;
     IERC1155 public diamond;
-
+    mapping (address=>userNFTData) public userNFT;
 
 
 
@@ -44,7 +50,21 @@ contract QubeBalance is Ownable{
 
     }    
 
-
+    function removeNFT(address _user, uint256 _ID) public{
+        require(msg.sender==_user || msg.sender==owner());
+        if (!(userNFT[_user].IDs[userNFT[_user].IDs.length - 1]==_ID)){
+            userNFT[_user].IDs[_ID] = userNFT[_user].IDs[userNFT[_user].IDs.length - 1];
+        }
+        userNFT[_user].IDs.pop();
+    }
+    function addNFT(address _user, uint256 _ID) public{
+        require(msg.sender==_user || msg.sender==owner());
+        userNFT[_user].IDs.push(_ID);
+    }
+    function changeNFTRank(address _user, uint256 _rank) public{
+        require(msg.sender==_user || msg.sender==owner());
+        userNFT[_user].rank=_rank;
+    }
     function setQube(IBEP20 _qube) public onlyOwner{
         qube=_qube;
     }
@@ -94,14 +114,12 @@ contract QubeBalance is Ownable{
     }
     function getNFTBalance(address walletAddress)public view returns (uint256){
         uint256 balance=0;
-        for (uint i=0;i<=1100;i++){
-            balance+=silver.balanceOf(walletAddress, i);
-        }
-        for (uint i=0;i<=300;i++){
-            balance+=gold.balanceOf(walletAddress, i);
-        }
-        for (uint i=0;i<=100;i++){
-            balance+=diamond.balanceOf(walletAddress, i);
+        
+        for (uint i=0;i<userNFT[walletAddress].IDs.length;i++){
+            uint256 currentID=userNFT[walletAddress].IDs[i];
+            balance+=silver.balanceOf(walletAddress, currentID);
+            balance+=gold.balanceOf(walletAddress, currentID);
+            balance+=diamond.balanceOf(walletAddress, currentID);
         }
         return balance;
     }

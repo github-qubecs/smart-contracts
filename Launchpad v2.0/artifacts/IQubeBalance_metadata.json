@@ -1,0 +1,147 @@
+{
+	"compiler": {
+		"version": "0.8.7+commit.e28d00a7"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "walletAddress",
+						"type": "address"
+					}
+				],
+				"name": "qubeBalance",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "walletAddress",
+						"type": "address"
+					}
+				],
+				"name": "qubeBalanceWithNFT",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"Launchpad v2.0/QubeBalance.sol": "IQubeBalance"
+		},
+		"evmVersion": "london",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"Launchpad v2.0/Context.sol": {
+			"keccak256": "0x79c17a41618864c70441a4d102764e1dc19a59a3ca032faa00311c3985088d38",
+			"license": "GPL-3.0",
+			"urls": [
+				"bzz-raw://c54e8caff35a74d88f61a052d27435e5e7054c2f45296f4c3f256895bfa14091",
+				"dweb:/ipfs/QmcdHnbAnePEzhxk7s44cUvXuWLaqA8BdQUvMu7QExFokR"
+			]
+		},
+		"Launchpad v2.0/IBEP20.sol": {
+			"keccak256": "0xcae9ac84ab784008f30a90e5ab6521c30ec4f42d9f9e110a144abcc635b085d4",
+			"license": "GPL-3.0",
+			"urls": [
+				"bzz-raw://fbb7168f142c605e373d427342d6281d334df921beee358afd26bf60ef519829",
+				"dweb:/ipfs/QmcEwehJV2oFbkZ1dhxfk891xtQbTBgGXZvsZGbZXQizPH"
+			]
+		},
+		"Launchpad v2.0/IERC1155.sol": {
+			"keccak256": "0xb62802ce8a3939aeadcd2e66402ef5fc6bb0f28472ee0cf1996256afd07a4f7e",
+			"license": "GPL-3.0",
+			"urls": [
+				"bzz-raw://307d67fded286ba58cc753f6bb66210bb280513570a3639a6cca7084a913550b",
+				"dweb:/ipfs/QmfStWSozSBServbDGLPTh3NkPwd8mp8Cx78znqm2hh2Z5"
+			]
+		},
+		"Launchpad v2.0/Ownable.sol": {
+			"keccak256": "0x64dac411a5a0f78a56c6e643441d212034e48113390669104af8eeff0d9b5e5b",
+			"license": "GPL-3.0",
+			"urls": [
+				"bzz-raw://27b75334216d2872f67febcc805ed3d3cfa7284da0ddcd19f4acc9e472fba553",
+				"dweb:/ipfs/QmZdrvWUEkrRDuPXaHXdXvqgi6RKwAKzYBAy4k1J28Fz4n"
+			]
+		},
+		"Launchpad v2.0/PancakePair.sol": {
+			"keccak256": "0x08cbfd26b8ae96343ee12727417f83878c8672c27685b5cee144d6c41ea617c3",
+			"urls": [
+				"bzz-raw://79f0160d1068e9e10be5be79dec2c65270b491acbddf6f6f8734e0f5a12eb009",
+				"dweb:/ipfs/QmYB61k9YANyZP4zeHrA9yi3Dgm6vsK68VxmmtS8G1xUMA"
+			]
+		},
+		"Launchpad v2.0/QubeBalance.sol": {
+			"keccak256": "0x1d724f1affc46a166dc36c6796e8e6459b88612ca9a0731c103c10f5b102d63d",
+			"license": "GPL-3.0",
+			"urls": [
+				"bzz-raw://815d25f45700d2277210ac4bfd008a3dda31c02e8ec3fd996d9c3d9e4440fe18",
+				"dweb:/ipfs/QmSQbMX41P9LbdJFSAzUhA824KfZTQTZ8ZdghCdtK32uJf"
+			]
+		},
+		"Launchpad v2.0/QubePresale.sol": {
+			"keccak256": "0x9b9d5fd848252cdc0e56758201006a2a9685c15919b5a1b820e10b0155cd4870",
+			"license": "GPL-3.0",
+			"urls": [
+				"bzz-raw://29437221b207e18463474d14d6ffa871c2ce9a31e072ade9db7666640305992a",
+				"dweb:/ipfs/QmTAdyPEPzTDx5k5qreDYXkCHCeaKFo3SWLtXh7eeio3YG"
+			]
+		},
+		"Launchpad v2.0/QubeStakeFactory.sol": {
+			"keccak256": "0xca0576f1be7cfa6b797cee8d95f514e482f75064b262dcb2f8b8765083c3fce2",
+			"license": "GPL-3.0",
+			"urls": [
+				"bzz-raw://904aa94c1bf928f6ac9646d05f66b5ed8111098e424e4327566950e0899b1a72",
+				"dweb:/ipfs/QmPYs512sP9Q7KWpqEvSf4mGNDKwzsdPtTQewQe1fqrPeX"
+			]
+		},
+		"Launchpad v2.0/SafeMath.sol": {
+			"keccak256": "0xa431304853d6c94edc72d1519f3007e526dca513203dc41f1e4cf4822fc4a344",
+			"license": "GPL-3.0",
+			"urls": [
+				"bzz-raw://d5a1caf5bd721db78c500e7f67070dd48ec9848a98795bb9aec052912abbdd6e",
+				"dweb:/ipfs/QmQGNVHDAtU4sSbRCiNkDfLErvsAQsjbHbiQt6MJUUy6wx"
+			]
+		}
+	},
+	"version": 1
+}
