@@ -18,6 +18,20 @@ interface IQubeBalance {
     function qubeBalanceWithNFT(address walletAddress) external view returns (uint256);
 }
 
+interface IQubeStake{
+    /*struct userData {
+        address user;
+        uint256 stakeTime;
+        uint256 deadLine;
+        uint256 claimTime;
+        uint256 stakeAmount;
+        uint256 totalRewards;
+    }
+    mapping (uint256 => userData) public userInfo;*/
+    function userInfo(uint256 index) external view returns (address user, uint256 stakeTime, uint256 deadLine, uint256 claimTime, uint256 stakeAmount, uint256 totalRewards);
+    function userTickets(address user) external view returns (uint256[] memory);
+}
+
 contract QubeBalance is Ownable{
     struct userData {
         address user;
@@ -38,6 +52,7 @@ contract QubeBalance is Ownable{
     IBEP20 public qube;
     QubePresale public qubePresale;
     IPancakePair public pancakePair;
+    IQubeStake public qubeStake;
     QubeStakeFactory public qubeStakeFactory;
     IERC1155 public silver;
     IERC1155 public gold;
@@ -49,6 +64,10 @@ contract QubeBalance is Ownable{
     constructor() {
 
     }    
+
+    function setQubeStake(IQubeStake _qubeStake) public onlyOwner{
+        qubeStake=_qubeStake;
+    }
 
     function removeNFT(address _user, uint256 _ID) public{
         require(msg.sender==_user || msg.sender==owner());
@@ -74,7 +93,7 @@ contract QubeBalance is Ownable{
     function setQubePancakePair(IPancakePair _pancakePair) public onlyOwner{
         pancakePair=_pancakePair;
     }
-    function setQubeStake(QubeStakeFactory _qubeStakeFactory) public onlyOwner{
+    function setQubeStakeFactory(QubeStakeFactory _qubeStakeFactory) public onlyOwner{
         qubeStakeFactory=_qubeStakeFactory;
     }
     function setSilver(IERC1155 _silver) public onlyOwner{
@@ -112,6 +131,23 @@ contract QubeBalance is Ownable{
         }
         return _balance;
     }
+    function getQubeStakeBalance(address walletAddress)public view returns(uint256){
+        uint256 _balance;
+        address _user;
+        uint256 _stakeTime;
+        uint256 _deadLine;
+        uint256 _claimTime;
+        uint256 _stakeAmount;
+        uint256 _totalRewards;
+        uint256[] memory tickets = qubeStake.userTickets(walletAddress);
+
+        for (uint i=0; i<tickets.length; i++){
+            //userData storage userStore = qubeStake.userInfo[i];
+            (_user, _stakeTime, _deadLine, _claimTime, _stakeAmount, _totalRewards) = qubeStake.userInfo(i);
+            _balance+= _stakeAmount;
+        }
+        return _balance;
+    }
     function getNFTBalance(address walletAddress)public view returns (uint256){
         uint256 balance=0;
         
@@ -125,9 +161,9 @@ contract QubeBalance is Ownable{
     }
     
     function qubeBalance(address walletAddress) public view returns (uint256){
-        return getQubeBalance(walletAddress) + getQubePresaleBalance(walletAddress)+getPancakePairBalance(walletAddress)+getQubeStakeFactoryBalance(walletAddress);
+        return getQubeBalance(walletAddress) + getQubePresaleBalance(walletAddress)+getPancakePairBalance(walletAddress)+getQubeStakeBalance(walletAddress);
     }
     function qubeBalanceWithNFT(address walletAddress) public view returns (uint256){
-        return getQubeBalance(walletAddress) + getQubePresaleBalance(walletAddress)+getPancakePairBalance(walletAddress)+getQubeStakeFactoryBalance(walletAddress)+getNFTBalance(walletAddress);
+        return getQubeBalance(walletAddress) + getQubePresaleBalance(walletAddress)+getPancakePairBalance(walletAddress)+getQubeStakeBalance(walletAddress)+getNFTBalance(walletAddress);
     }
 }
