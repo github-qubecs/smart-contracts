@@ -134,40 +134,46 @@ contract QubeBalance is Ownable{
         }
         return _balance;
     }
-    function getNFTBalance(address walletAddress)public view returns (uint256){
-        uint256 balance=0;
-        
+    function getNFTBalance(address walletAddress)public view returns (uint256 balanceSilver, uint256 balanceGold, uint256 balanceDiamond){
+        balanceSilver=0;
+        balanceGold=0;
+        balanceDiamond=0;
+
         for (uint i=0;i<userNFT[walletAddress].IDs.length;i++){
             uint256 currentID=userNFT[walletAddress].IDs[i];
-            balance+=silver.balanceOf(walletAddress, currentID);
-            balance+=gold.balanceOf(walletAddress, currentID);
-            balance+=diamond.balanceOf(walletAddress, currentID);
+            balanceSilver+=silver.balanceOf(walletAddress, currentID);
+            balanceGold+=gold.balanceOf(walletAddress, currentID);
+            balanceDiamond+=diamond.balanceOf(walletAddress, currentID);
         }
-        return balance;
+        return (balanceSilver, balanceGold, balanceDiamond);
     }
 
-    function getNFTBalanceFromAllNFTs(address walletAddress)public view returns (uint256){
-        uint256 balance=0;
+    function getNFTBalanceFromAllNFTs(address walletAddress)public view returns (uint256 balanceSilver, uint256 balanceGold, uint256 balanceDiamond){
+        balanceSilver=0;
+        balanceGold=0;
+        balanceDiamond=0;
         for (uint i=0;i<=1100;i++){
-            balance+=silver.balanceOf(walletAddress, i);
+            balanceSilver+=silver.balanceOf(walletAddress, i);
         }
         for (uint i=0;i<=300;i++){
-            balance+=gold.balanceOf(walletAddress, i);
+            balanceGold+=gold.balanceOf(walletAddress, i);
         }
         for (uint i=0;i<=100;i++){
-            balance+=diamond.balanceOf(walletAddress, i);
+            balanceDiamond+=diamond.balanceOf(walletAddress, i);
 
         }
-        return balance;
+        return (balanceSilver, balanceGold, balanceDiamond);
     }
     
     function qubeBalance(address walletAddress) public view returns (uint256){
         return getQubeBalance(walletAddress) + getQubePresaleBalance(walletAddress)+getPancakePairBalance(walletAddress)+getQubeStakeBalance(walletAddress);
     }
     function qubeBalanceWithNFT(address walletAddress) public view returns (uint256){
-        return getQubeBalance(walletAddress) + getQubePresaleBalance(walletAddress)+getPancakePairBalance(walletAddress)+getQubeStakeBalance(walletAddress)+getNFTBalance(walletAddress);
+        (uint256 balanceSilver, uint256 balanceGold, uint256 balanceDiamond) = getNFTBalance(walletAddress);
+        return getQubeBalance(walletAddress) + getQubePresaleBalance(walletAddress)+getPancakePairBalance(walletAddress)+getQubeStakeBalance(walletAddress)+balanceSilver+balanceGold+balanceDiamond;
     }
     function qubeBalanceWithNFTFromAllNFTs(address walletAddress) public view returns (uint256){
-        return getQubeBalance(walletAddress) + getQubePresaleBalance(walletAddress)+getPancakePairBalance(walletAddress)+getQubeStakeBalance(walletAddress)+getNFTBalanceFromAllNFTs(walletAddress);
+        (uint256 balanceSilver, uint256 balanceGold, uint256 balanceDiamond) = getNFTBalanceFromAllNFTs(walletAddress);
+        return getQubeBalance(walletAddress) + getQubePresaleBalance(walletAddress)+getPancakePairBalance(walletAddress)+getQubeStakeBalance(walletAddress)+balanceSilver+balanceGold+balanceDiamond;
     }
 }
